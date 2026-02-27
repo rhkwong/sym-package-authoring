@@ -1,0 +1,26 @@
+author: rhkwong
+license: MIT
+category: tooling
+stability: stable
+tags: [authoring, packages, instructions, presets]
+agents: [claude, cursor, windsurf, copilot]
+languages: [any]
+min_symposia_version: ">=0.5.0"
+
+when_to_use: creating symposia packages, writing agent instructions, authoring presets
+not_when: using existing packages, general development
+
+scenarios:
+  - create a new symposia package
+  - audit package quality
+  - write effective agent instructions
+
+problems:
+  - inconsistent package structure
+  - unclear instruction format
+  - poor discoverability
+
+depends_on: []
+complements: []
+conflicts_with: []
+supersedes: null
