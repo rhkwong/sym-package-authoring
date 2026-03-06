@@ -55,6 +55,7 @@ See `.claude/docs/package-authoring/PUBLISHING.md` for the full publish flow and
 - [ ] All files referenced in `config.yml` `files` array exist
 - [ ] `when_to_use` and `scenarios` written for search discovery
 - [ ] Cross-references use dest paths (`.claude/docs/...`), not source paths (`files/...`)
+- [ ] `postInstall` added if users must take manual action (env vars, setup commands) — see `FILE_STRUCTURE.md`
 
 ## Effective Patterns
 

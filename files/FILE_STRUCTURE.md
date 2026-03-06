@@ -231,6 +231,31 @@ instructions:
 
 **Key convention**: `path` is relative to the package root (where `config.yml` lives). `dest` is where the file lands in the target project.
 
+### Post-Install Messages
+
+Add `postInstall` to `config.yml` when users must take manual action after installation (set environment variables, install external dependencies, run setup commands, etc.):
+
+```yaml
+name: sym-example
+version: 1.0.0
+postInstall: |
+  Set your API key:
+    export EXAMPLE_API_KEY=your-key-here
+  Then run: npx example-setup
+files:
+  - path: files/QUICK_REFERENCE.md
+    dest: .claude/docs/example/QUICK_REFERENCE.md
+```
+
+| Use `postInstall` When | Don't Use When |
+|------------------------|----------------|
+| Environment variables must be set | Package works out of the box |
+| External tool must be installed | All dependencies are bundled |
+| User must run a setup command | Sync handles everything |
+| Credentials or config needed | Instructions alone are sufficient |
+
+The message displays **only on first install** (`sym add`), not on subsequent `sym sync` runs. Keep it short and actionable — tell users exactly what to do, not why.
+
 A `registry.yml` file sits alongside `config.yml` at the package root. See `.claude/docs/package-authoring/PUBLISHING.md` for the full field reference.
 
 ## Layering Information
