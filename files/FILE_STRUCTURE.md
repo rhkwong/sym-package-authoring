@@ -9,11 +9,32 @@ Every package needs a single entry point that agents read first.
 ### Structure
 
 ```
-.claude/docs/[package-name]/
-├── QUICK_REFERENCE.md    ← Entry point (agents read this first)
-├── DETAILED_WORKFLOW.md  ← Deep dive (referenced when needed)
-├── PATTERNS.md           ← Examples and templates
-└── TROUBLESHOOTING.md    ← Problem-specific guidance
+.symposia/packages/[package-name]/
+├── config.yml              ← Package config (name, version, file mappings)
+├── registry.yml            ← Registry metadata (author, category, scenarios)
+└── files/
+    ├── QUICK_REFERENCE.md  ← Entry point doc
+    ├── WORKFLOW.md          ← Detailed workflow doc
+    ├── skills/
+    │   └── my-skill/
+    │       └── SKILL.md    ← Slash command or agent-invocable skill
+    ├── hooks/
+    │   └── pre-commit.sh   ← Hook script
+    └── templates/
+        └── config.json     ← Config template
+```
+
+Installed layout in the target project:
+
+```
+.claude/
+├── docs/[package-name]/
+│   ├── QUICK_REFERENCE.md    ← Entry point (agents read this first)
+│   ├── DETAILED_WORKFLOW.md  ← Deep dive (referenced when needed)
+│   ├── PATTERNS.md           ← Examples and templates
+│   └── TROUBLESHOOTING.md    ← Problem-specific guidance
+└── skills/[skill-name]/
+    └── SKILL.md              ← User-invocable or agent-invocable skill
 ```
 
 ### Entry Point Responsibilities
@@ -183,10 +204,19 @@ The `config.yml` maps package files to project locations:
 name: sym-example
 version: 1.0.0
 files:
-  - path: files/.claude/docs/example/QUICK_REFERENCE.md
+  # Docs — path is relative to package root, dest is where it lands in target project
+  - path: files/QUICK_REFERENCE.md
     dest: .claude/docs/example/QUICK_REFERENCE.md
-  - path: files/.claude/docs/example/WORKFLOW.md
+  - path: files/WORKFLOW.md
     dest: .claude/docs/example/WORKFLOW.md
+  # Skills
+  - path: files/skills/example-check/SKILL.md
+    dest: .claude/skills/example-check/SKILL.md
+  # Templates and hooks
+  - path: files/templates/config.json
+    dest: .project/config.json
+  - path: files/hooks/lint-hook.sh
+    dest: .project/hooks/lint-hook.sh
 instructions:
   - targets:
       claude: CLAUDE.md
@@ -198,6 +228,10 @@ instructions:
 
       When doing X, follow `.claude/docs/example/QUICK_REFERENCE.md`.
 ```
+
+**Key convention**: `path` is relative to the package root (where `config.yml` lives). `dest` is where the file lands in the target project.
+
+A `registry.yml` file sits alongside `config.yml` at the package root. See `.claude/docs/package-authoring/PUBLISHING.md` for the full field reference.
 
 ## Layering Information
 

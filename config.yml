@@ -1,5 +1,5 @@
 name: sym-package-authoring
-version: 1.0.0
+version: 1.1.0
 description: Best practices for creating effective Symposia packages
 files:
   - path: files/QUICK_REFERENCE.md
@@ -10,6 +10,10 @@ files:
     dest: .claude/docs/package-authoring/FILE_STRUCTURE.md
   - path: files/EXAMPLES.md
     dest: .claude/docs/package-authoring/EXAMPLES.md
+  - path: files/PUBLISHING.md
+    dest: .claude/docs/package-authoring/PUBLISHING.md
+  - path: files/SKILLS_AND_HOOKS.md
+    dest: .claude/docs/package-authoring/SKILLS_AND_HOOKS.md
 instructions:
   - targets:
       claude: CLAUDE.md
@@ -19,4 +23,4 @@ instructions:
     content: |
       ## Package Authoring
 
-      When creating, editing, or auditing Symposia packages (presets/, .symposia/), follow `.claude/docs/package-authoring/QUICK_REFERENCE.md` for content patterns and file structure. **MUST** use imperative voice and decision tables.
+      When creating, editing, or auditing Symposia packages (.symposia/), follow `.claude/docs/package-authoring/QUICK_REFERENCE.md` for content patterns and file structure. See `PUBLISHING.md` for registry.yml and the publish flow. See `SKILLS_AND_HOOKS.md` for shipping skills, hooks, and config templates. **MUST** use imperative voice and decision tables.

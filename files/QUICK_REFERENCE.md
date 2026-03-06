@@ -24,7 +24,7 @@
 
 ## Content Checklist
 
-Before publishing a package (see `CONTENT_PATTERNS.md` for detailed guidance):
+Before publishing a package (see `.claude/docs/package-authoring/CONTENT_PATTERNS.md` for detailed guidance):
 
 - [ ] Instructions use imperative voice ("Run tests", not "You should run tests")
 - [ ] Every decision point has a table or clear Yes/No guidance
@@ -36,13 +36,25 @@ Before publishing a package (see `CONTENT_PATTERNS.md` for detailed guidance):
 
 ## File Structure Checklist
 
-See `FILE_STRUCTURE.md` for the three-layer model and directory conventions.
+See `.claude/docs/package-authoring/FILE_STRUCTURE.md` for the three-layer model and directory conventions.
 
 - [ ] Entry point file exists (QUICK_REFERENCE.md or README.md)
 - [ ] Instruction file injection references the entry point
 - [ ] Detailed docs are separate files, referenced when needed
 - [ ] File names are SCREAMING_SNAKE_CASE.md
-- [ ] Cross-references use relative paths
+- [ ] Cross-references use dest paths (`.claude/docs/...`), not source paths
+- [ ] Skills placed under `.claude/skills/{name}/SKILL.md` with valid frontmatter
+- [ ] Non-doc files (hooks, templates, configs) mapped in `config.yml`
+
+## Publishing Checklist
+
+See `.claude/docs/package-authoring/PUBLISHING.md` for the full publish flow and registry.yml reference.
+
+- [ ] `registry.yml` exists alongside `config.yml` with required fields (`author`, `license`, `stability`, `when_to_use`, `category`)
+- [ ] `version` in `config.yml` is valid semver (`x.y.z`)
+- [ ] All files referenced in `config.yml` `files` array exist
+- [ ] `when_to_use` and `scenarios` written for search discovery
+- [ ] Cross-references use dest paths (`.claude/docs/...`), not source paths (`files/...`)
 
 ## Effective Patterns
 
@@ -70,7 +82,7 @@ Symposia injects into agent instruction files: CLAUDE.md, .cursorrules, .github/
 
 ## Anti-Patterns
 
-See `EXAMPLES.md` for side-by-side comparisons of ineffective vs effective content.
+See `.claude/docs/package-authoring/EXAMPLES.md` for side-by-side comparisons of ineffective vs effective content.
 
 | Don't | Do Instead |
 |-------|------------|

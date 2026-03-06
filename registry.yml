@@ -1,26 +1,20 @@
 author: rhkwong
 license: MIT
-category: tooling
 stability: stable
-tags: [authoring, packages, instructions, presets]
+category: tooling
+when_to_use: "creating symposia packages, writing agent instructions, authoring skills and hooks, publishing to the registry"
+not_when: "using existing packages, general coding tasks"
+scenarios:
+  - "create a new symposia package from scratch"
+  - "write a registry.yml for publishing"
+  - "add skills or hooks to an existing package"
+  - "audit package quality before publishing"
+  - "write effective agent instructions"
+problems:
+  - "unclear how to structure a symposia package"
+  - "don't know what fields registry.yml needs"
+  - "agent instructions are too vague and agents ignore them"
+  - "package ships docs but needs skills, hooks, or templates too"
+tags: [authoring, packages, instructions, skills, hooks, publishing, registry]
 agents: [claude, cursor, windsurf, copilot]
 languages: [any]
-min_symposia_version: ">=0.5.0"
-
-when_to_use: creating symposia packages, writing agent instructions, authoring presets
-not_when: using existing packages, general development
-
-scenarios:
-  - create a new symposia package
-  - audit package quality
-  - write effective agent instructions
-
-problems:
-  - inconsistent package structure
-  - unclear instruction format
-  - poor discoverability
-
-depends_on: []
-complements: []
-conflicts_with: []
-supersedes: null
