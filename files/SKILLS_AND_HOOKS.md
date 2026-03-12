@@ -1,6 +1,27 @@
 # Skills, Hooks, and Non-Doc Files
 
-Packages can ship more than markdown docs. This covers skills, hooks, templates, and config files.
+Packages can ship more than markdown docs. This covers skills, hooks, file injection, post-install activation, templates, and config files.
+
+## File Delivery Mechanisms
+
+Choose the right mechanism for each piece of content:
+
+| Mechanism | Use when | Example |
+|-----------|----------|---------|
+| `files` | Static content copied verbatim | docs, templates, seed configs, skill files |
+| `instructions` | Inject into agent config files (CLAUDE.md, .cursorrules) | 2-3 sentence package blurb |
+| `inject` | Inject into arbitrary files with comment markers | git hooks, shell configs, CI files |
+
+### Decision Table
+
+| Content | Mechanism | Why |
+|---------|-----------|-----|
+| Markdown docs | `files` | Agents read them as-is |
+| Skill files | `files` | Installed to `.claude/skills/` |
+| Agent config blurb | `instructions` | Marker-wrapped injection into CLAUDE.md etc. |
+| Git hook content | `inject` | Merges with other hooks in same file |
+| CI config additions | `inject` | Preserves existing config, adds marked section |
+| Standalone config | `files` | Copied once, no merge needed |
 
 ## Skills
 
@@ -64,26 +85,149 @@ files:
     dest: .claude/skills/my-skill/SKILL.md
 ```
 
-## Hooks
+## File Injection
 
-Shell scripts triggered by Claude Code events (pre-tool-call, post-tool-call, etc.).
+Inject content into arbitrary files using comment-delimited markers. Content is wrapped in markers so it can be idempotently updated and cleanly removed on `sym remove`.
 
-### How to Ship Hooks
+### When to Use Injection
 
-1. Include the hook script in your `config.yml` files array
-2. Document setup instructions in a `HOOK_SETUP.md` or via a `/setup` skill
+| Scenario | Use `inject` | Use `files` |
+|----------|-------------|-------------|
+| Git hook that coexists with other hooks | Yes | No |
+| Shell profile additions | Yes | No |
+| Standalone config file | No | Yes |
+| File that must merge with existing content | Yes | No |
+| File that should be replaced entirely | No | Yes |
+
+### config.yml Syntax
 
 ```yaml
-files:
-  - path: files/hooks/pre-commit-check.sh
-    dest: .para/hooks/pre-commit-check.sh
-  - path: files/HOOK_SETUP.md
-    dest: .claude/docs/my-pkg/HOOK_SETUP.md
+inject:
+  - source: files/hooks/post-commit.sh    # source file in package
+    dest: .git/hooks/post-commit           # target file in project
+    comment: "#"                           # marker comment style
+    executable: true                       # chmod +x after write
 ```
 
-### Important Limitation
+| Field | Required | Description |
+|-------|----------|-------------|
+| `source` | Yes | Path to source file within the package |
+| `dest` | Yes | Destination file path in target project |
+| `comment` | Yes | Comment prefix for markers: `"#"`, `"//"`, `"--"` |
+| `executable` | No | If `true`, `chmod +x` the dest file after write |
 
-Symposia has no `post_install` hook. Users must configure `.claude/settings.json` manually or use a setup skill to register hooks. Document this clearly.
+### Marker Format
+
+Injected content is wrapped in comment-delimited markers:
+
+```bash
+# --- symposia:my-package ---
+# injected content here
+# --- /symposia:my-package ---
+```
+
+The comment prefix changes based on `comment`:
+
+| `comment` | Start marker | End marker |
+|-----------|-------------|------------|
+| `"#"` | `# --- symposia:pkg ---` | `# --- /symposia:pkg ---` |
+| `"//"` | `// --- symposia:pkg ---` | `// --- /symposia:pkg ---` |
+| `"--"` | `-- --- symposia:pkg ---` | `-- --- /symposia:pkg ---` |
+
+### Injection Behavior
+
+| Scenario | What happens |
+|----------|-------------|
+| Dest file does not exist | Create file with marked section. If `comment: "#"` and `executable: true`, prepend `#!/bin/sh` shebang. |
+| Dest file exists, no markers | Append marked section after existing content |
+| Dest file exists, has markers | Replace existing marked section (idempotent) |
+| Source file has shebang (`#!/...`) | Strip shebang before injection — dest file owns the shebang |
+| `executable: true` | `chmod +x` applied after write |
+
+### Removal Behavior
+
+On `sym remove`:
+
+| After removal | What happens |
+|---------------|-------------|
+| File has remaining content | Marked section stripped, file preserved |
+| File is empty or only shebang | File deleted entirely |
+
+## Post-Install Activation
+
+Trigger automated setup after a package is installed for the first time.
+
+### When to Use
+
+| Scenario | Use `activate` | Use `postInstall` message |
+|----------|---------------|--------------------------|
+| Package has a `/setup` skill to run | Yes, with `file` | Also add message as fallback |
+| Complex setup requiring agent interaction | Yes | Also add message as fallback |
+| User must set env vars manually | No | Yes |
+| Package works out of the box | No | No |
+
+### config.yml Syntax
+
+```yaml
+postInstall:
+  message: "Run /my-setup to complete setup."
+  activate:
+    file: files/skills/my-setup/SKILL.md
+```
+
+Or with an inline prompt:
+
+```yaml
+postInstall:
+  message: "Configure your API endpoint."
+  activate:
+    prompt: "Ask the user for their API endpoint and write it to .env"
+```
+
+| Field | Description |
+|-------|-------------|
+| `activate.file` | Path to a skill file in the package. Extracts skill `name` from YAML frontmatter and shows `/skill-name` instruction. |
+| `activate.prompt` | Inline prompt string passed directly to Claude. |
+
+**MUST** provide either `file` or `prompt`, not both.
+
+### Activation Behavior
+
+| Context | What happens |
+|---------|-------------|
+| **Terminal (TTY)** | Prompts user: "Run /skill-name to complete setup. Launch Claude?" If accepted, spawns Claude subprocess. |
+| **Inside Claude Code (non-TTY)** | Prints instruction: "Run /skill-name to complete setup." The calling agent reads this and acts. |
+
+Activation fires **only on first install** (`sym add`), not on subsequent `sym sync` runs.
+
+### Best Practice
+
+Pair `activate` with a setup skill. The skill handles interactive setup (creating configs, prompting for values, installing hooks). This pattern is cleaner than inline prompts.
+
+## Hooks
+
+Shell scripts that integrate with git or Claude Code events.
+
+### Shipping Hooks via File Injection
+
+Use `inject` to install hook content that coexists with other hooks in the same file:
+
+```yaml
+inject:
+  - source: files/hooks/post-commit.sh
+    dest: .git/hooks/post-commit
+    comment: "#"
+    executable: true
+```
+
+This is the **preferred pattern** for git hooks. The injected content is wrapped in markers and cleanly removed on `sym remove`.
+
+### When Manual Setup Is Still Needed
+
+Use a setup skill or `postInstall` message when:
+- Hooks require environment-specific configuration (API keys, paths)
+- Hooks register with Claude Code's `.claude/settings.json` (PostToolUse, PreToolUse events)
+- Hook behavior varies per project
 
 ## Templates and Config Files
 
@@ -103,15 +247,17 @@ Ship sensible defaults. If customization is needed, provide a `/setup` skill tha
 
 ## Decision Table: What Goes Where
 
-| Content Type | Destination | Example |
-|---|---|---|
-| Agent instructions | `.claude/docs/{pkg}/` | `QUICK_REFERENCE.md` |
-| Slash command skills | `.claude/skills/{name}/SKILL.md` | `para-triage` skill |
-| Hook scripts | Project-specific path | `.para/hooks/pre-commit.sh` |
-| Config templates | Project-specific path | `.para/config.json` |
-| Gitkeep/seed files | Project-specific path | `.para/reviews/.gitkeep` |
+| Content Type | Mechanism | Destination | Example |
+|---|---|---|---|
+| Agent instructions | `files` | `.claude/docs/{pkg}/` | `QUICK_REFERENCE.md` |
+| Slash command skills | `files` | `.claude/skills/{name}/SKILL.md` | `para-triage` skill |
+| Agent config blurb | `instructions` | CLAUDE.md, .cursorrules, etc. | 2-3 sentence injection |
+| Git hooks | `inject` | `.git/hooks/{hook}` | post-commit script |
+| Hook scripts (non-git) | `files` or `inject` | Project-specific path | `.para/hooks/check.sh` |
+| Config templates | `files` | Project-specific path | `.para/config.json` |
+| Seed files | `files` | Project-specific path | `.para/reviews/.gitkeep` |
 
-## config.yml Example with Mixed File Types
+## Complete config.yml Example
 
 ```yaml
 name: sym-example-full
@@ -123,11 +269,8 @@ files:
   - path: files/WORKFLOW.md
     dest: .claude/docs/example/WORKFLOW.md
   # Skills
-  - path: files/skills/example-check/SKILL.md
-    dest: .claude/skills/example-check/SKILL.md
-  # Hooks
-  - path: files/hooks/lint-hook.sh
-    dest: .project/hooks/lint-hook.sh
+  - path: files/skills/example-setup/SKILL.md
+    dest: .claude/skills/example-setup/SKILL.md
   # Templates
   - path: files/templates/config.json
     dest: .project/config.json
@@ -136,8 +279,20 @@ files:
 instructions:
   - targets:
       claude: CLAUDE.md
+      cursor: .cursorrules
+      copilot: .github/copilot-instructions.md
+      default: AGENTS.md
     content: |
       ## Example Workflow
 
       Follow `.claude/docs/example/QUICK_REFERENCE.md`. Use `/example-check` to validate.
+inject:
+  - source: files/hooks/post-commit.sh
+    dest: .git/hooks/post-commit
+    comment: "#"
+    executable: true
+postInstall:
+  message: "Run /example-setup to complete setup."
+  activate:
+    file: files/skills/example-setup/SKILL.md
 ```

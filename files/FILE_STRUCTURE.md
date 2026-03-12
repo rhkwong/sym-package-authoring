@@ -231,30 +231,37 @@ instructions:
 
 **Key convention**: `path` is relative to the package root (where `config.yml` lives). `dest` is where the file lands in the target project.
 
-### Post-Install Messages
+### Post-Install Messages and Activation
 
-Add `postInstall` to `config.yml` when users must take manual action after installation (set environment variables, install external dependencies, run setup commands, etc.):
+Add `postInstall` to `config.yml` when users need guidance or automated setup after installation.
+
+#### Simple message (string form)
 
 ```yaml
-name: sym-example
-version: 1.0.0
 postInstall: |
   Set your API key:
     export EXAMPLE_API_KEY=your-key-here
-  Then run: npx example-setup
-files:
-  - path: files/QUICK_REFERENCE.md
-    dest: .claude/docs/example/QUICK_REFERENCE.md
 ```
 
-| Use `postInstall` When | Don't Use When |
-|------------------------|----------------|
-| Environment variables must be set | Package works out of the box |
-| External tool must be installed | All dependencies are bundled |
-| User must run a setup command | Sync handles everything |
-| Credentials or config needed | Instructions alone are sufficient |
+#### Message with activation (object form)
 
-The message displays **only on first install** (`sym add`), not on subsequent `sym sync` runs. Keep it short and actionable — tell users exactly what to do, not why.
+```yaml
+postInstall:
+  message: "Run /my-setup to complete setup."
+  activate:
+    file: files/skills/my-setup/SKILL.md
+```
+
+The `activate` field triggers automated setup on first install. In a terminal, it prompts the user to launch Claude. Inside Claude Code, it prints the instruction for the calling agent to act on.
+
+| Use `postInstall` When | Form | Don't Use When |
+|------------------------|------|----------------|
+| Package has a `/setup` skill | Object with `activate.file` | Package works out of the box |
+| Complex setup requiring agent interaction | Object with `activate.prompt` | Sync handles everything |
+| Environment variables must be set | String message | Instructions alone are sufficient |
+| External tool must be installed | String message | All dependencies are bundled |
+
+Both forms display **only on first install** (`sym add`), not on subsequent `sym sync` runs. See `.claude/docs/package-authoring/SKILLS_AND_HOOKS.md` for the full activation reference.
 
 A `registry.yml` file sits alongside `config.yml` at the package root. See `.claude/docs/package-authoring/PUBLISHING.md` for the full field reference.
 

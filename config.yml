@@ -1,5 +1,5 @@
 name: sym-package-authoring
-version: 1.2.0
+version: 1.3.0
 description: Best practices for creating effective Symposia packages
 files:
   - path: files/QUICK_REFERENCE.md

@@ -45,6 +45,8 @@ See `.claude/docs/package-authoring/FILE_STRUCTURE.md` for the three-layer model
 - [ ] Cross-references use dest paths (`.claude/docs/...`), not source paths
 - [ ] Skills placed under `.claude/skills/{name}/SKILL.md` with valid frontmatter
 - [ ] Non-doc files (hooks, templates, configs) mapped in `config.yml`
+- [ ] Files that must merge with existing content use `inject` (not `files`) — see `SKILLS_AND_HOOKS.md`
+- [ ] Post-install activation configured if package ships a `/setup` skill — see `SKILLS_AND_HOOKS.md`
 
 ## Publishing Checklist
 
@@ -55,7 +57,8 @@ See `.claude/docs/package-authoring/PUBLISHING.md` for the full publish flow and
 - [ ] All files referenced in `config.yml` `files` array exist
 - [ ] `when_to_use` and `scenarios` written for search discovery
 - [ ] Cross-references use dest paths (`.claude/docs/...`), not source paths (`files/...`)
-- [ ] `postInstall` added if users must take manual action (env vars, setup commands) — see `FILE_STRUCTURE.md`
+- [ ] `postInstall` added if users must take manual action or package has a setup skill — see `FILE_STRUCTURE.md`
+- [ ] `inject` entries tested: install creates marked sections, remove cleans them up
 
 ## Effective Patterns
 
