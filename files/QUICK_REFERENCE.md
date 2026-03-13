@@ -44,9 +44,8 @@ See `.claude/docs/package-authoring/FILE_STRUCTURE.md` for the three-layer model
 - [ ] File names are SCREAMING_SNAKE_CASE.md
 - [ ] Cross-references use dest paths (`.claude/docs/...`), not source paths
 - [ ] Skills placed under `.claude/skills/{name}/SKILL.md` with valid frontmatter
-- [ ] Non-doc files (hooks, templates, configs) mapped in `config.yml`
-- [ ] Files that must merge with existing content use `inject` (not `files`) — see `SKILLS_AND_HOOKS.md`
-- [ ] Post-install activation configured if package ships a `/setup` skill — see `SKILLS_AND_HOOKS.md`
+- [ ] Non-doc files (templates, configs) mapped in `config.yml` `files`
+- [ ] Shared-file hooks (git hooks) use `inject` with valid `comment` syntax — see `SKILLS_AND_HOOKS.md`
 
 ## Publishing Checklist
 
@@ -54,11 +53,10 @@ See `.claude/docs/package-authoring/PUBLISHING.md` for the full publish flow and
 
 - [ ] `registry.yml` exists alongside `config.yml` with required fields (`author`, `license`, `stability`, `when_to_use`, `category`)
 - [ ] `version` in `config.yml` is valid semver (`x.y.z`)
-- [ ] All files referenced in `config.yml` `files` array exist
+- [ ] All files referenced in `config.yml` `files` and `inject` arrays exist
 - [ ] `when_to_use` and `scenarios` written for search discovery
 - [ ] Cross-references use dest paths (`.claude/docs/...`), not source paths (`files/...`)
-- [ ] `postInstall` added if users must take manual action or package has a setup skill — see `FILE_STRUCTURE.md`
-- [ ] `inject` entries tested: install creates marked sections, remove cleans them up
+- [ ] `postInstall` added if users need setup on first install (env vars, setup skill activation) — see `FILE_STRUCTURE.md`
 
 ## Effective Patterns
 

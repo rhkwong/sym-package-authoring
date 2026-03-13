@@ -203,6 +203,10 @@ The `config.yml` maps package files to project locations:
 ```yaml
 name: sym-example
 version: 1.0.0
+postInstall:
+  message: "Hook installed. Run /example-setup to finish."
+  activate:
+    file: files/skills/example-setup/SKILL.md
 files:
   # Docs — path is relative to package root, dest is where it lands in target project
   - path: files/QUICK_REFERENCE.md
@@ -212,11 +216,15 @@ files:
   # Skills
   - path: files/skills/example-check/SKILL.md
     dest: .claude/skills/example-check/SKILL.md
-  # Templates and hooks
+  # Templates
   - path: files/templates/config.json
     dest: .project/config.json
-  - path: files/hooks/lint-hook.sh
-    dest: .project/hooks/lint-hook.sh
+inject:
+  # Git hook — marker-isolated, multiple packages can coexist
+  - source: files/post-commit.sh
+    dest: .git/hooks/post-commit
+    comment: "#"
+    executable: true
 instructions:
   - targets:
       claude: CLAUDE.md
@@ -229,39 +237,39 @@ instructions:
       When doing X, follow `.claude/docs/example/QUICK_REFERENCE.md`.
 ```
 
-**Key convention**: `path` is relative to the package root (where `config.yml` lives). `dest` is where the file lands in the target project.
+**Key conventions**:
+- `path` is relative to the package root (where `config.yml` lives). `dest` is where the file lands in the target project.
+- `files` copies standalone files. `inject` inserts marker-wrapped content into shared files (see `.claude/docs/package-authoring/SKILLS_AND_HOOKS.md`).
 
-### Post-Install Messages and Activation
+### Post-Install
 
-Add `postInstall` to `config.yml` when users need guidance or automated setup after installation.
+`postInstall` supports two forms: a simple string message, or an object with `message` and `activate`.
 
-#### Simple message (string form)
+**String form** — display a message on first install:
 
 ```yaml
-postInstall: |
-  Set your API key:
-    export EXAMPLE_API_KEY=your-key-here
+postInstall: "Set your API key: export EXAMPLE_API_KEY=your-key-here"
 ```
 
-#### Message with activation (object form)
+**Object form** — display a message and auto-launch a setup skill:
 
 ```yaml
 postInstall:
-  message: "Run /my-setup to complete setup."
+  message: "Hook installed. Running setup to configure .gitignore."
   activate:
     file: files/skills/my-setup/SKILL.md
 ```
 
-The `activate` field triggers automated setup on first install. In a terminal, it prompts the user to launch Claude. Inside Claude Code, it prints the instruction for the calling agent to act on.
+`activate` accepts `file` (path to a skill, relative to package root) or `prompt` (inline text). At least one is required. In TTY mode, the user is prompted before Claude launches. Inside an existing Claude session, an instruction is printed for the agent.
 
-| Use `postInstall` When | Form | Don't Use When |
-|------------------------|------|----------------|
-| Package has a `/setup` skill | Object with `activate.file` | Package works out of the box |
-| Complex setup requiring agent interaction | Object with `activate.prompt` | Sync handles everything |
-| Environment variables must be set | String message | Instructions alone are sufficient |
-| External tool must be installed | String message | All dependencies are bundled |
+| Use `postInstall` When | Don't Use When |
+|------------------------|----------------|
+| Environment variables must be set | Package works out of the box |
+| External tool must be installed | All dependencies are bundled |
+| Setup skill must run on first install | Sync handles everything |
+| Credentials or config needed | Instructions alone are sufficient |
 
-Both forms display **only on first install** (`sym add`), not on subsequent `sym sync` runs. See `.claude/docs/package-authoring/SKILLS_AND_HOOKS.md` for the full activation reference.
+Fires **only on first install** (`sym add`), not on subsequent `sym sync` runs. Keep messages short and actionable.
 
 A `registry.yml` file sits alongside `config.yml` at the package root. See `.claude/docs/package-authoring/PUBLISHING.md` for the full field reference.
 

@@ -258,6 +258,48 @@ doc for system design decisions.
 
 ---
 
+## Example 7: Shipping Git Hooks
+
+### Ineffective
+
+```yaml
+# config.yml — ships hook as standalone file, requires manual setup
+files:
+  - path: files/hooks/post-commit.sh
+    dest: .project/hooks/post-commit.sh
+  - path: files/HOOK_SETUP.md
+    dest: .claude/docs/my-pkg/HOOK_SETUP.md
+postInstall: "Run /my-setup to register the hook in .claude/settings.json"
+```
+
+**Problems:**
+- User must manually run a setup skill to register the hook
+- Cannot coexist with other packages that also need post-commit hooks
+- Hook lives in a non-standard location, not in `.git/hooks/`
+
+### Effective
+
+```yaml
+# config.yml — injects into shared git hook, auto-runs setup
+inject:
+  - source: files/post-commit.sh
+    dest: .git/hooks/post-commit
+    comment: "#"
+    executable: true
+postInstall:
+  message: "Post-commit hook installed. Running setup."
+  activate:
+    file: files/skills/my-setup/SKILL.md
+```
+
+**Why it works:**
+- `inject` wraps content in markers — multiple packages share `.git/hooks/post-commit`
+- `executable: true` handles `chmod +x` automatically
+- `postInstall.activate` launches the setup skill on first install (with user confirmation)
+- `sym remove` cleans up only this package's section
+
+---
+
 ## Anti-Pattern Checklist
 
 Review your package content for these issues:
